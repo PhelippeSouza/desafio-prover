@@ -12,6 +12,8 @@ interface StoreState {
   setStores: (stores: Store[]) => void;
   addStore: (store: Store) => void;
   removeStore: (storeId: string) => void;
+  updateStore: (storeId: string, store: Partial<Store>) => void;
+  updateStoreApi: (storeId: string, store: Partial<Store>) => Promise<void>;
   setSelectedStore: (store: Store | null) => void;
 
   // Product actions
@@ -50,8 +52,34 @@ export const useStore = create<StoreState>((set, get) => ({
     })),
   removeStore: (storeId) =>
     set((state) => ({
-      stores: state.stores.filter((s) => s.id !== storeId),
+      stores: state.stores.filter((store) => store.id !== storeId),
     })),
+  updateStore: (storeId, updates) =>
+    set((state) => ({
+      stores: state.stores.map((s) =>
+        s.id === storeId ? { ...s, ...updates } : s
+      ),
+    })),
+  updateStoreApi: async (storeId, updates) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`/stores/${storeId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      const updatedStore = await response.json();
+      if (!updatedStore) {
+        throw new Error("Loja não encontrada");
+      }
+      get().updateStore(storeId, updatedStore);
+    } catch (error) {
+      set({ error: "Erro ao atualizar loja" });
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
   setSelectedStore: (store) => set({ selectedStore: store }),
 
   // Product actions
@@ -144,7 +172,7 @@ export const useStore = create<StoreState>((set, get) => ({
   deleteStore: async (storeId: string) => {
     set({ loading: true, error: null });
     try {
-      await fetch(`/stores/${storeId}`, { method: "POST" });
+      await fetch(`/stores/${storeId}`, { method: "DELETE" });
       get().removeStore(storeId);
 
     } catch (error) {

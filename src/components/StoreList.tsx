@@ -7,17 +7,26 @@ import {
   Text,
   Alert,
   TextInput,
+  Modal,
 } from "react-native";
 import { useStore } from "../store/useStore";
 import { Store } from "../types";
 import { Link } from "expo-router";
+import { store } from "expo-router/build/global-state/router-store";
 
 interface StoreListProps {
   onSelectStore: (store: Store) => void;
 }
 
 export function StoreList({ onSelectStore }: StoreListProps) {
-  const { stores, loading, fetchStores, deleteStore } = useStore();
+  const { stores, loading, fetchStores, deleteStore, updateStoreApi } = useStore();
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    location: "",
+    phone: "",
+  });
   const [search, setSearch] = useState("");
 
   const filteredStores = stores.filter(
@@ -49,6 +58,40 @@ export function StoreList({ onSelectStore }: StoreListProps) {
     );
   };
 
+  const openEditModal = (item: Store) => {
+    setEditingStore(item);
+    setEditFormData({
+      name: item.name,
+      location: item.location,
+      phone: item.phone || "",
+    });
+    setEditModalVisible(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    setEditingStore(null);
+    setEditFormData({ name: "", location: "", phone: "" });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingStore) return;
+
+    if (!editFormData.name.trim() || !editFormData.location.trim()) {
+      Alert.alert("Erro", "Nome e localização são obrigatórios");
+      return;
+    }
+
+    try {
+      await updateStoreApi(editingStore.id, editFormData);
+      await fetchStores();
+      Alert.alert("Sucesso", "Loja atualizada com sucesso!");
+      closeEditModal();
+    } catch (error) {
+      Alert.alert("Erro", "Erro ao atualizar loja");
+    }
+  };
+
   const renderStoreItem = ({ item }: { item: Store }) => (
     <TouchableOpacity
       style={styles.storeCard}
@@ -56,16 +99,27 @@ export function StoreList({ onSelectStore }: StoreListProps) {
     >
       <View style={styles.storeHeader}>
         <Text style={styles.storeName}>{item.name}</Text>
+
+        <View style={{ flexDirection: "row", gap: 12 }}>
+
+
         <TouchableOpacity
-          style={styles.deleteButton}
+        
           onPress={() => handleDelete(item.id, item.name)}
         >
-          <Text style={styles.deleteButtonText}>×</Text>
+          <Text>Deletar</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+         
+          onPress={() => openEditModal(item)}
+        >
+          <Text>Editar</Text>
+        </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.storeLocation}>📍 {item.location}</Text>
-      {item.phone && <Text style={styles.storePhone}>📱 {item.phone}</Text>}
     </TouchableOpacity>
   );
 
@@ -79,16 +133,14 @@ export function StoreList({ onSelectStore }: StoreListProps) {
 
   return (
     <View style={styles.container}>
-
       <Text style={styles.title}>Lojas Cadastradas</Text>
       {stores.length > 1 && (
-
-      <TextInput
-      style={styles.input}
-        placeholder="Buscar loja..."
-        value={search}
-        onChangeText={setSearch}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Buscar loja..."
+          value={search}
+          onChangeText={setSearch}
+        />
       )}
       {stores.length === 0 ? (
         <View style={styles.emptyState}>
@@ -104,6 +156,35 @@ export function StoreList({ onSelectStore }: StoreListProps) {
           scrollEnabled={false}
         />
       )}
+
+      <Modal visible={editModalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Editar Loja</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nome da loja"
+              value={editFormData.name}
+              onChangeText={(text) => setEditFormData((prev) => ({ ...prev, name: text }))}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Localização"
+              value={editFormData.location}
+              onChangeText={(text) => setEditFormData((prev) => ({ ...prev, location: text }))}
+            />
+            <View style={styles.modalButtons}> 
+              <TouchableOpacity style={[ styles.cancelButton]} onPress={closeEditModal}>
+                <Text >Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveEdit}>
+                <Text >Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -112,14 +193,13 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
   },
-  input:{
-    borderWidth:1,
-    borderColor:"#e0e0e0",
-    borderRadius:8,
-    padding:8,
-    marginBottom:16,
-    backgroundColor:"#fff",
-
+  input: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 16,
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 18,
@@ -192,5 +272,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
     textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  modalContainer: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  cancelButton: {
+    backgroundColor: "#888",
   },
 });

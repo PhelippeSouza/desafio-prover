@@ -96,6 +96,18 @@ export function setupMirageServer() {
         }
         return null;
       });
+
+      // PUT atualizar loja
+      this.put("/stores/:id", (schema, request) => {
+        const { id } = request.params;
+        const attrs = JSON.parse(request.requestBody);
+        const store = schema.db.stores.find((s: Store) => s.id === id);
+        if (store) {
+          Object.assign(store, attrs);
+          return store;
+        }
+        return null;
+      });
     },
   });
 }
