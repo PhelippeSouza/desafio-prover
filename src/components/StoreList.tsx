@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   Text,
   Alert,
+  TextInput,
 } from "react-native";
 import { useStore } from "../store/useStore";
 import { Store } from "../types";
-import {Link} from 'expo-router'
+import { Link } from "expo-router";
 
 interface StoreListProps {
   onSelectStore: (store: Store) => void;
@@ -17,6 +18,13 @@ interface StoreListProps {
 
 export function StoreList({ onSelectStore }: StoreListProps) {
   const { stores, loading, fetchStores, deleteStore } = useStore();
+  const [search, setSearch] = useState("");
+
+  const filteredStores = stores.filter(
+    (store) =>
+      store?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      store?.location?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   useEffect(() => {
     fetchStores();
@@ -37,16 +45,11 @@ export function StoreList({ onSelectStore }: StoreListProps) {
           },
           style: "destructive",
         },
-      ]
+      ],
     );
   };
 
-
-
-
- 
   const renderStoreItem = ({ item }: { item: Store }) => (
-    console.log("Renderizando loja:", item),
     <TouchableOpacity
       style={styles.storeCard}
       onPress={() => onSelectStore(item)}
@@ -75,9 +78,18 @@ export function StoreList({ onSelectStore }: StoreListProps) {
   }
 
   return (
-    <View style={styles.container}>    
+    <View style={styles.container}>
 
       <Text style={styles.title}>Lojas Cadastradas</Text>
+      {stores.length > 1 && (
+
+      <TextInput
+      style={styles.input}
+        placeholder="Buscar loja..."
+        value={search}
+        onChangeText={setSearch}
+      />
+      )}
       {stores.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>
@@ -86,7 +98,7 @@ export function StoreList({ onSelectStore }: StoreListProps) {
         </View>
       ) : (
         <FlatList
-          data={stores}
+          data={filteredStores}
           renderItem={renderStoreItem}
           keyExtractor={(item) => item.id}
           scrollEnabled={false}
@@ -99,6 +111,15 @@ export function StoreList({ onSelectStore }: StoreListProps) {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
+  },
+  input:{
+    borderWidth:1,
+    borderColor:"#e0e0e0",
+    borderRadius:8,
+    padding:8,
+    marginBottom:16,
+    backgroundColor:"#fff",
+
   },
   title: {
     fontSize: 18,
