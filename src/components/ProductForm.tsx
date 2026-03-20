@@ -19,8 +19,7 @@ export function ProductForm({ storeId, onProductCreated }: ProductFormProps) {
   const { createProduct, loading } = useStore();
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
-    price: 0,
-    description: "",
+ 
     quantity: 0,
   });
 
@@ -30,15 +29,12 @@ export function ProductForm({ storeId, onProductCreated }: ProductFormProps) {
       return;
     }
 
-    if (formData.price <= 0) {
-      Alert.alert("Erro", "Preço deve ser maior que zero");
-      return;
-    }
+ 
 
     try {
       await createProduct(formData, storeId);
       Alert.alert("Sucesso", "Produto criado com sucesso!");
-      setFormData({ name: "", price: 0, description: "", quantity: 0 });
+      setFormData({ name: "", quantity: 0 });
       onProductCreated?.();
     } catch (error) {
       Alert.alert("Erro", "Erro ao criar produto");
@@ -59,16 +55,6 @@ export function ProductForm({ storeId, onProductCreated }: ProductFormProps) {
         editable={!loading}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Preço"
-        value={formData.price.toString()}
-        onChangeText={(text) =>
-          setFormData({ ...formData, price: parseFloat(text) || 0 })
-        }
-        keyboardType="decimal-pad"
-        editable={!loading}
-      />
 
       <TextInput
         style={styles.input}

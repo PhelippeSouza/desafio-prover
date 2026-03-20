@@ -49,7 +49,7 @@ export function ProductList({ storeId, onProductsUpdated }: ProductListProps) {
   };
 
   const renderProductItem = ({ item }: { item: Product }) => (
-    console.log("Renderizando produto:", item.id),
+
     <View style={styles.productCard}>
       <View style={styles.productHeader}>
         <Text style={styles.productName}>{item.name}</Text>
@@ -62,12 +62,6 @@ export function ProductList({ storeId, onProductsUpdated }: ProductListProps) {
       </View>
 
       <View style={styles.productDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>Preço:</Text>
-          <Text style={styles.value}>
-            R$ {item.price.toFixed(2)}
-          </Text>
-        </View>
 
         <View style={styles.detailRow}>
           <Text style={styles.label}>Quantidade:</Text>

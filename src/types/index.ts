@@ -23,7 +23,7 @@ export interface StoreFormData {
 
 export interface ProductFormData {
   name: string;
-  price: number;
+  price?: number;
   description?: string;
   quantity?: number;
 }

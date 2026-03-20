@@ -62,15 +62,6 @@ export function StoreForm({
         editable={!loading}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Telefone (opcional)"
-        value={formData.phone}
-        onChangeText={(text) =>
-          setFormData({ ...formData, phone: text })
-        }
-        editable={!loading}
-      />
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
